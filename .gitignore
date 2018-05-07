@@ -1,0 +1,7 @@
+/.idea/
+snake-cljs.iml
+/*.log
+/target
+/*-init.clj
+/resources/public/js
+out
