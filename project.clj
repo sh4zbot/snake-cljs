@@ -32,8 +32,7 @@
   {:builds
    [{:id           "dev"
      :source-paths ["src/cljs" "src/cljc"]
-     :figwheel     {                                        ;:on-jsload "snake-cljs.core/reload"
-                    }
+     :figwheel     {:on-jsload "snake-cljs.core/reload"}
      :compiler     {:main                 snake-cljs.core
                     :optimizations        :none
                     :output-to            "resources/public/js/app.js"

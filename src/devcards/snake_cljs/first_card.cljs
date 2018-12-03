@@ -4,7 +4,8 @@
                                           mkdn-pprint-source]])
   (:require [devcards.core]
             [reagent.core :as reagent]
-            [snake-cljs.core :refer [app-state app-component]]))
+            [snake-cljs.core :refer [app-state]]
+            [snake-cljs.components :refer [app-component]]))
 
 
 

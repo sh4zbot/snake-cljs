@@ -1,6 +1,6 @@
 # snake-cljs
 
-A [reagent](https://github.com/reagent-project/reagent) powered snake game for learning purposes using cljss and devcards.
+A [reagent](https://github.com/reagent-project/reagent) powered DOM rendered snake game (for learning purposes) using cljss and devcards.
 
 ## Development Mode
 

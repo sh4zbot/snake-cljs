@@ -1,12 +1,9 @@
 (ns snake-cljs.core
   (:require
     [reagent.core :as reagent]
-    [snake-cljs.game :refer [create-game
-                             move-snake]]
-    [snake-cljs.css :refer [grid-template]]
-    [cljs.core.async :refer [timeout put! chan]]
-    [cljss.core :refer [defstyles]]
-    [cljss.reagent :refer-macros [defstyled]]
+    [snake-cljs.components :refer [app-component]]
+    [snake-cljs.game :refer [create-game move-snake tick]]
+    [cljs.core.async :refer [ timeout put! chan]]
     [goog.events :as events]))
 
 
@@ -18,80 +15,65 @@
 ;            :grid-template-rows (grid-template row-num height)
 ;            :background-color "black"})
 
-(defstyled Board :div
-           {:display               "grid"
-            :grid-template-columns :columns
-            :grid-template-rows    :rows
-            ;:background-color "blue"
-            })
 
-
-(defstyled Square :div
-           {:grid-column-start "auto"
-            :width             :width
-            :height            :height
-            :background-color  (with-meta #(if % "red" "black") :snake?)})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Vars
 
 (defonce app-state
-         (reagent/atom {}))
+         (reagent/atom (create-game {:row-num 15
+                                     :col-num 15
+                                     :width 20
+                                     :height 20})))
 
-(reset! app-state (create-game))
+;(reset! app-state (create-game {:row-num 15 :col-num 15}))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Events
 
+(defn keycode->direction [keycode]
+  (case keycode
+    39 :right
+    37 :left
+    48 :down
+    38 :up))
+
+(defn not-backwards [state dir]
+  (case (:direction state)
+    :left (not= dir :right)
+    :right (not= dir :left)
+    :up (not= dir :down)
+    :down (not= dir :up)))
+
+(defn key-down-event [e]
+  (.preventDefault e)
+  (let [key-code (.-keyCode e)
+        direction (keycode->direction key-code)]
+    ;(swap! app-state (fn [state]
+    ;                   (move-snake state key-code)))
+    (swap! app-state (fn [state]
+                       ;TODO
+                       (when (not-backwards state direction))
+                       (assoc state :direction direction)))))
+
+
 (defonce key-handler
          (events/listen js/window "keydown"
-                        (fn [e]
-                          (.preventDefault e)
-                          (let [key-code (.-keyCode e)]
-                            (swap! app-state (fn [state]
-                                               (move-snake state key-code)))))))
+                        (fn [e] (key-down-event e))))
 
 (defn handle-event [name data]
   (case name
     :assoc-key (swap! app-state (fn [state]
-                                  (assoc state (:key data) (:value data))))))
+                                  (assoc state (:key data) (:value data))))
+    nil))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Page
-
-(defn assoc-key [ratom f key text]
-  [:button {:on-click (fn [e]
-                        (handle-event :assoc-key {:key   :col-num
-                                                  :value (f (key @ratom))}))}
-   text])
-
-(defn ui [ratom]
-  [:div
-   (assoc-key ratom inc :col-num "Add Column")
-   (assoc-key ratom dec :col-num "Remove Column")])
-
-
-
-(defn game [ratom]
-  (let [state @ratom
-        row-num (:row-num state)
-        col-num (:col-num state)
-        width (:width state)
-        height (:height state)
-        snake (:snake state)]
-    (Board {:columns (grid-template col-num width)
-            :rows    (grid-template row-num height)}
-           (for [x (range (* row-num col-num))]
-             (Square {:width  width
-                                :height height
-                                :snake? (= x snake)
-                                :key x})))))
-
-(defn app-component [ratom]
-  [:div
-   (ui ratom)
-   (game ratom)])
+;;
+(.setInterval js/window (fn [e]
+                          (swap! app-state (fn [state]
+                                             (tick state))))
+              200)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -103,7 +85,7 @@
     (println "dev mode")))
 
 (defn reload []
-  (reagent/render [app-component app-state]
+  (reagent/render [app-component app-state handle-event]
                   (.getElementById js/document "app")))
 
 (defn ^:export main []
